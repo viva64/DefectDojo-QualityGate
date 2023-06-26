@@ -26,8 +26,8 @@ def quality_gate(severity):
         if(severity[i]> gateway[i]):
             health = False
     
-        print("Quality Gate Status: " +  ("Success", "Failed")[health])   
-        sys.exit((0, 1)[health])
+    print("Quality Gate Status: " +  ("Success", "Failed")[health])   
+    sys.exit((0, 1)[health])
 
 class Main:
     dd = defectdojo.DefectDojoAPIv2(host, api_key, user, debug=False)
