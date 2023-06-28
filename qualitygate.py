@@ -1,13 +1,11 @@
-from defectdojo_api import defectdojo_apiv2 as defectdojo
-import sys
+import requests, sys, argparse
 
 host = 'http://localhost:8080/'
-api_key = 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
-user = 'admin'
+headers = {'Authorization' : 'Token xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', 'accept':'application/json'}
 
 def sum_severity(findings):
     severity = [0,0,0,0,0]
-    for finding in findings.data["results"]:
+    for finding in findings:
         if finding["severity"] == "Critical":
             severity[0] = severity[0] + 1
         if finding["severity"] == "High":
@@ -19,23 +17,55 @@ def sum_severity(findings):
 
     return severity
 
-def quality_gate(severity):
-    gateway = [0,10,50,150] #Quality Gate by severity: Critical High Medium Low
+def quality_gate(severity, critical=0, high=0, Medium=0,Low=0):
+    gateway = [critical,high,Medium,Low] #Quality Gate by severity
     health = True
     for i in range(4):
-        if(severity[i]> gateway[i]):
+        if(severity[i]> int(gateway[i])):
             health = False
     
-    print("Quality Gate Status: " +  ("Success", "Failed")[health])   
-    sys.exit((0, 1)[health])
+    print("Quality Gate Status: " +  ("Failed","Success")[health])   
+    sys.exit((1,0)[health])
+
+
+
+def last_test(engagement_id):
+    test_rq = host + 'api/v2/tests/'
+
+    payload = {'engagement':engagement_id, 'o':'-updated', 'limit':'1'}
+
+    request = requests.get(test_rq, params=payload, headers=headers)
+
+    return request.json()['results'][0]['id']
+
+def findings(engagement_id):
+    findings_rq = host + 'api/v2/findings/'
+
+    payload = {'test':last_test(engagement_id), 'false_p':'false', 'limit':25}
+
+    request = requests.get(findings_rq, params=payload, headers=headers)
+
+    return request.json()['results']
+
 
 class Main:
-    dd = defectdojo.DefectDojoAPIv2(host, api_key, user, debug=False)
-    tests = dd.list_tests(sys.argv[1])
-    last_test_id = tests.data['results'][-1]['id']
-
-    findings = dd.list_findings(test_id_in=last_test_id, limit=sys.maxsize, duplicate="false", is_mitigated="false")
-    severity = sum_severity(findings)
+    if __name__ == "__main__":
+        parser = argparse.ArgumentParser(description='DefectDojo report uploader')
+        parser.add_argument('--engagement', help="Engagement ID", required=True)
+        parser.add_argument('--critical', help="Quality Gate Critical Warnings Level", required=False)
+        parser.add_argument('--high', help="Quality Gate High Warnings Level", required=False)
+        parser.add_argument('--medium', help="Quality Gate Medium Warnings Level", required=False)
+        parser.add_argument('--low', help="Quality Gate Low Warnings Level", required=False)
+        
+        args = vars(parser.parse_args())
+        engagement_id = args["engagement"]
+        critical = args["critical"]
+        high = args["high"]
+        medium = args["medium"]
+        low = args["low"]
+        
+        severity = sum_severity(findings(engagement_id))
     
-    quality_gate(severity)
-    
+        quality_gate(severity, critical, high, medium, low)
+#Launch example python ./qualitygate.py --engagement 6 --critical 0 --high 10 --medium 50 --low 250
+        
