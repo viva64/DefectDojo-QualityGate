@@ -1,7 +1,7 @@
-import requests, sys, argparse
+import requests, sys, argparse, os
 
-host = 'http://localhost:8080/'
-headers = {'Authorization' : 'Token xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx', 'accept':'application/json'}
+host = os.environ['DD_HOST']
+headers = {'Authorization' : 'Token '+ os.environ['DD_API_TOKEN'], 'accept':'application/json'}
 
 def sum_severity(findings):
     severity = [0,0,0,0,0]
@@ -27,24 +27,18 @@ def quality_gate(severity, critical=0, high=0, Medium=0,Low=0):
     print("Quality Gate Status: " +  ("Failed","Success")[health])   
     sys.exit((1,0)[health])
 
-
-
 def last_test(engagement_id):
     test_rq = host + 'api/v2/tests/'
-
     payload = {'engagement':engagement_id, 'o':'-updated', 'limit':'1'}
-
     request = requests.get(test_rq, params=payload, headers=headers)
 
     return request.json()['results'][0]['id']
 
 def findings(engagement_id):
     findings_rq = host + 'api/v2/findings/'
-
     payload = {'test':last_test(engagement_id), 'false_p':'false', 'limit':10000000}
-
     request = requests.get(findings_rq, params=payload, headers=headers)
-
+    
     return request.json()['results']
 
 
