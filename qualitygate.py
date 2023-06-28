@@ -41,7 +41,7 @@ def last_test(engagement_id):
 def findings(engagement_id):
     findings_rq = host + 'api/v2/findings/'
 
-    payload = {'test':last_test(engagement_id), 'false_p':'false', 'limit':25}
+    payload = {'test':last_test(engagement_id), 'false_p':'false', 'limit':10000000}
 
     request = requests.get(findings_rq, params=payload, headers=headers)
 
