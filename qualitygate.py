@@ -23,7 +23,7 @@ def quality_gate(severity, critical=0, high=0, Medium=0,Low=0):
     for i in range(4):
         if(severity[i]> int(gateway[i])):
             health = False
-    
+    print("Critical: "+str(severity[0])+" High: "+str(severity[1])+" Medium: "+str(severity[2])+" Low: "+ str(severity[3]))
     print("Quality Gate Status: " +  ("Failed","Success")[health])   
     sys.exit((1,0)[health])
 
